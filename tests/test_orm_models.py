@@ -344,3 +344,134 @@ def test_audit_event_nullable_fields(db_session: Session) -> None:
     assert fetched_audit.recommendation_id is None
     assert fetched_audit.planner_id is None
     assert fetched_audit.action == "RISK_DETECTED"
+
+
+def test_inventory_policy_and_po_check_constraints(db_session: Session) -> None:
+    """Verify check constraints on InventoryPolicy and PurchaseOrder."""
+    product = Product(sku="SKU-8842", name="Salmon", category="Seafood", unit_of_measure="CS")
+    dc = DistributionCenter(code="DC-CHI", name="Chicago", city="Chicago", state="IL")
+    supplier = Supplier(supplier_code="SUP-001", name="Seafood Co")
+    db_session.add_all([product, dc, supplier])
+    db_session.commit()
+
+    # Safety stock days < 0 violation
+    invalid_policy = InventoryPolicy(
+        dc_id=dc.id, product_id=product.id, safety_stock_days=-1.0
+    )
+    db_session.add(invalid_policy)
+    with pytest.raises(IntegrityError):
+        db_session.commit()
+    db_session.rollback()
+
+    # Ordered Qty <= 0 violation
+    invalid_po = PurchaseOrder(
+        po_number="PO-INVALID-001",
+        supplier_id=supplier.id,
+        product_id=product.id,
+        destination_dc_id=dc.id,
+        ordered_qty=0,  # Invalid: <= 0
+        expected_delivery_date=date(2026, 9, 25),
+        status="OPEN",
+    )
+    db_session.add(invalid_po)
+    with pytest.raises(IntegrityError):
+        db_session.commit()
+    db_session.rollback()
+
+
+def test_supply_event_and_demand_check_constraints(db_session: Session) -> None:
+    """Verify check constraints on SupplyEvent and DailyDemandSignal."""
+    product = Product(sku="SKU-8842", name="Salmon", category="Seafood", unit_of_measure="CS")
+    dc = DistributionCenter(code="DC-CHI", name="Chicago", city="Chicago", state="IL")
+    supplier = Supplier(supplier_code="SUP-001", name="Seafood Co")
+    db_session.add_all([product, dc, supplier])
+    db_session.commit()
+
+    po = PurchaseOrder(
+        po_number="PO-VALID-001",
+        supplier_id=supplier.id,
+        product_id=product.id,
+        destination_dc_id=dc.id,
+        ordered_qty=100,
+        expected_delivery_date=date(2026, 9, 25),
+        status="OPEN",
+    )
+    db_session.add(po)
+    db_session.commit()
+
+    # SupplyEvent delay_days < 0 violation
+    invalid_event = SupplyEvent(po_id=po.id, event_type="DELAY", delay_days=-5)
+    db_session.add(invalid_event)
+    with pytest.raises(IntegrityError):
+        db_session.commit()
+    db_session.rollback()
+
+    # DailyDemandSignal daily_demand_qty < 0 violation
+    invalid_demand = DailyDemandSignal(
+        dc_id=dc.id, product_id=product.id, signal_date=date(2026, 9, 16), daily_demand_qty=-10
+    )
+    db_session.add(invalid_demand)
+    with pytest.raises(IntegrityError):
+        db_session.commit()
+    db_session.rollback()
+
+
+def test_unique_constraints_all_entities(db_session: Session) -> None:
+    """Verify duplicate insertions fail on unique columns and composite keys."""
+    product = Product(sku="SKU-8842", name="Salmon", category="Seafood", unit_of_measure="CS")
+    dc1 = DistributionCenter(code="DC-CHI", name="Chicago", city="Chicago", state="IL")
+    dc2 = DistributionCenter(code="DC-IND", name="Indianapolis", city="Indianapolis", state="IN")
+    supplier = Supplier(supplier_code="SUP-001", name="Seafood Co")
+    db_session.add_all([product, dc1, dc2, supplier])
+    db_session.commit()
+
+    # Supplier product uniqueness: (supplier_id, product_id)
+    sp1 = SupplierProduct(
+        supplier_id=supplier.id,
+        product_id=product.id,
+        unit_cost=Decimal("10"),
+        std_lead_time_days=1,
+    )
+    sp2 = SupplierProduct(
+        supplier_id=supplier.id,
+        product_id=product.id,
+        unit_cost=Decimal("12"),
+        std_lead_time_days=2,
+    )
+    db_session.add(sp1)
+    db_session.commit()
+    db_session.add(sp2)
+    with pytest.raises(IntegrityError):
+        db_session.commit()
+    db_session.rollback()
+
+    # Route uniqueness: (source_dc_id, target_dc_id)
+    r1 = DCRoute(
+        source_dc_id=dc1.id,
+        target_dc_id=dc2.id,
+        transit_days=1,
+        cost_per_unit=Decimal("2"),
+    )
+    r2 = DCRoute(
+        source_dc_id=dc1.id,
+        target_dc_id=dc2.id,
+        transit_days=2,
+        cost_per_unit=Decimal("3"),
+    )
+    db_session.add(r1)
+    db_session.commit()
+    db_session.add(r2)
+    with pytest.raises(IntegrityError):
+        db_session.commit()
+    db_session.rollback()
+
+    # Inventory balance uniqueness: (dc_id, product_id)
+    ib1 = InventoryBalance(dc_id=dc1.id, product_id=product.id, on_hand_qty=10)
+    ib2 = InventoryBalance(dc_id=dc1.id, product_id=product.id, on_hand_qty=20)
+    db_session.add(ib1)
+    db_session.commit()
+    db_session.add(ib2)
+    with pytest.raises(IntegrityError):
+        db_session.commit()
+    db_session.rollback()
+

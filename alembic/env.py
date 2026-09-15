@@ -19,8 +19,9 @@ config = context.config
 if config.config_file_name:
     fileConfig(config.config_file_name)
 
-# Overwrite sqlalchemy.url with application settings configuration
-config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
+# Set default sqlalchemy.url from application settings if not already provided
+if not config.get_main_option("sqlalchemy.url"):
+    config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
 
 target_metadata = Base.metadata
 
