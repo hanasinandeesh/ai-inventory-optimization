@@ -1,5 +1,6 @@
 """Pydantic schemas package."""
 
+from app.schemas.audit import AuditEventResponse
 from app.schemas.decision import (
     ApproveRecommendationRequest,
     PlannerDecisionResponse,
@@ -12,6 +13,7 @@ from app.schemas.risk import RiskIncidentResponse, TriggerRiskDetectionRequest
 
 __all__ = [
     "ApproveRecommendationRequest",
+    "AuditEventResponse",
     "ErrorResponse",
     "HealthCheckResponse",
     "PlannerDecisionResponse",

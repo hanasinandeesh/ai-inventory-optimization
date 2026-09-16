@@ -469,20 +469,44 @@ class SQLAlchemyAuditRepository:
         self._session.flush()
         return audit_event
 
-    def get_by_incident_id(self, incident_id: int) -> list[AuditEvent]:
+    def get_by_incident_id(self, incident_id: int) -> list[AuditEventDTO]:
         stmt = (
             select(AuditEvent)
             .where(AuditEvent.incident_id == incident_id)
             .order_by(AuditEvent.created_at.asc())
         )
         result: Sequence[AuditEvent] = self._session.execute(stmt).scalars().all()
-        return list(result)
+        return [
+            AuditEventDTO(
+                id=audit.id,
+                incident_id=audit.incident_id,
+                action=audit.action,
+                recommendation_id=audit.recommendation_id,
+                planner_id=audit.planner_id,
+                input_snapshot_json=audit.input_snapshot_json,
+                final_approved_qty=audit.final_approved_qty,
+                created_at=audit.created_at,
+            )
+            for audit in result
+        ]
 
-    def get_by_recommendation_id(self, recommendation_id: int) -> list[AuditEvent]:
+    def get_by_recommendation_id(self, recommendation_id: int) -> list[AuditEventDTO]:
         stmt = (
             select(AuditEvent)
             .where(AuditEvent.recommendation_id == recommendation_id)
             .order_by(AuditEvent.created_at.asc())
         )
         result: Sequence[AuditEvent] = self._session.execute(stmt).scalars().all()
-        return list(result)
+        return [
+            AuditEventDTO(
+                id=audit.id,
+                incident_id=audit.incident_id,
+                action=audit.action,
+                recommendation_id=audit.recommendation_id,
+                planner_id=audit.planner_id,
+                input_snapshot_json=audit.input_snapshot_json,
+                final_approved_qty=audit.final_approved_qty,
+                created_at=audit.created_at,
+            )
+            for audit in result
+        ]

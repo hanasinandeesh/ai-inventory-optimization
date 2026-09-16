@@ -23,6 +23,7 @@ from app.infrastructure.db.repositories.sqlalchemy_repositories import (
     SQLAlchemyRouteRepository,
     SQLAlchemyTransferRecommendationRepository,
 )
+from app.services.dtos import AuditEventDTO
 
 
 @pytest.fixture(scope="function")
@@ -294,7 +295,122 @@ def test_audit_repository_append_only(test_db: Session, seeded_data: dict[str, i
 
     events = repo.get_by_incident_id(incident.id)
     assert len(events) == 1
+    assert isinstance(events[0], AuditEventDTO)
     assert events[0].action == "RISK_DETECTED"
+
+
+def test_audit_repository_dto_mapping_and_ordering(
+    test_db: Session, seeded_data: dict[str, int]
+) -> None:
+    """Verify SQLAlchemyAuditRepository returns AuditEventDTO objects with incident filtering
+    and oldest-first ordering."""
+    from datetime import UTC, datetime, timedelta
+
+    from app.services.dtos import AuditEventDTO
+
+    incident1 = RiskIncident(
+        incident_code="INC-AUDIT-DTO-1",
+        target_dc_id=seeded_data["chi_dc_id"],
+        product_id=seeded_data["product_id"],
+        current_dos=1.0,
+        days_to_stockout=1.0,
+        projected_stockout_date=date(2026, 9, 17),
+        shortage_qty=50.0,
+        severity="CRITICAL",
+    )
+    incident2 = RiskIncident(
+        incident_code="INC-AUDIT-DTO-2",
+        target_dc_id=seeded_data["chi_dc_id"],
+        product_id=seeded_data["product_id"],
+        current_dos=2.0,
+        days_to_stockout=2.0,
+        projected_stockout_date=date(2026, 9, 18),
+        shortage_qty=100.0,
+        severity="HIGH",
+    )
+    test_db.add_all([incident1, incident2])
+    test_db.commit()
+
+    repo = SQLAlchemyAuditRepository(test_db)
+    now = datetime.now(UTC)
+
+    # 1. First event: System event with None for nullable fields
+    e1 = AuditEvent(
+        incident_id=incident1.id,
+        action="RISK_DETECTED",
+        recommendation_id=None,
+        planner_id=None,
+        input_snapshot_json=None,
+        final_approved_qty=None,
+        created_at=now - timedelta(minutes=10),
+    )
+    test_db.add(e1)
+
+    # 2. Second event: Recommendation generation
+    e2 = AuditEvent(
+        incident_id=incident1.id,
+        action="RECOMMENDATION_GENERATED",
+        recommendation_id=10,
+        planner_id=None,
+        input_snapshot_json='{"rec": 10}',
+        final_approved_qty=None,
+        created_at=now - timedelta(minutes=5),
+    )
+    test_db.add(e2)
+
+    # 3. Third event: Planner approval with non-null values
+    e3 = AuditEvent(
+        incident_id=incident1.id,
+        action="PLANNER_APPROVED",
+        recommendation_id=10,
+        planner_id="planner_john",
+        input_snapshot_json='{"comment": "Approved"}',
+        final_approved_qty=180,
+        created_at=now,
+    )
+    test_db.add(e3)
+
+    # 4. Unrelated event for incident2
+    e_other = AuditEvent(
+        incident_id=incident2.id,
+        action="RISK_DETECTED",
+        recommendation_id=None,
+        planner_id=None,
+        input_snapshot_json=None,
+        final_approved_qty=None,
+        created_at=now,
+    )
+    test_db.add(e_other)
+    test_db.commit()
+
+    # Query audit events for incident1
+    results = repo.get_by_incident_id(incident1.id)
+
+    # 1. Check count and incident_id filtering (incident2 excluded)
+    assert len(results) == 3
+    assert all(r.incident_id == incident1.id for r in results)
+
+    # 2. Check return type: all items are AuditEventDTO instances
+    assert all(isinstance(r, AuditEventDTO) for r in results)
+
+    # 3. Check ordering: oldest first (e1 -> e2 -> e3)
+    assert results[0].action == "RISK_DETECTED"
+    assert results[1].action == "RECOMMENDATION_GENERATED"
+    assert results[2].action == "PLANNER_APPROVED"
+    assert results[0].created_at <= results[1].created_at <= results[2].created_at
+
+    # 4. Check nullable fields on e1 (all nullable fields None)
+    assert results[0].recommendation_id is None
+    assert results[0].planner_id is None
+    assert results[0].input_snapshot_json is None
+    assert results[0].final_approved_qty is None
+
+    # 5. Check populated fields on e3
+    assert results[2].recommendation_id == 10
+    assert results[2].planner_id == "planner_john"
+    assert results[2].input_snapshot_json == '{"comment": "Approved"}'
+    assert results[2].final_approved_qty == 180
+    assert results[2].created_at is not None
 
 
 def test_repository_methods_do_not_commit_transactions(

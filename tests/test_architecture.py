@@ -36,3 +36,25 @@ def test_domain_isolation_boundaries() -> None:
                 assert prohibited not in getattr(mod, "__dict__", {}), (
                     f"Domain submodule '{mod_name}' imports prohibited framework '{prohibited}'"
                 )
+
+
+def test_audit_query_service_dependency_inversion() -> None:
+    """Verifies AuditQueryService imports zero FastAPI, SQLAlchemy, or concrete repositories."""
+    import app.services.audit_query_service as mod
+
+    mod_dict = getattr(mod, "__dict__", {})
+    prohibited = [
+        "fastapi",
+        "sqlalchemy",
+        "SQLAlchemyRiskIncidentRepository",
+        "SQLAlchemyAuditRepository",
+    ]
+
+    for key, val in mod_dict.items():
+        assert key not in prohibited, f"AuditQueryService imports prohibited symbol '{key}'"
+        if hasattr(val, "__module__") and val.__module__:
+            assert "fastapi" not in val.__module__, f"Prohibited import fastapi in '{key}'"
+            assert "sqlalchemy" not in val.__module__, f"Prohibited import sqlalchemy in '{key}'"
+            assert "infrastructure" not in val.__module__, (
+                f"Prohibited import infrastructure in '{key}'"
+            )

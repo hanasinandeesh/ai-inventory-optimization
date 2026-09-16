@@ -8,6 +8,7 @@ from app.infrastructure.db.models.inventory import InventoryBalance, InventoryPo
 from app.infrastructure.db.models.product import Product
 from app.infrastructure.db.models.recommendation import TransferRecommendation
 from app.infrastructure.db.models.risk import RiskIncident
+from app.services.dtos import AuditEventDTO
 
 
 class ProductRepositoryInterface(Protocol):
@@ -99,8 +100,8 @@ class AuditRepositoryInterface(Protocol):
     Updates/Deletes are strictly forbidden.
     """
 
-    def create_audit_event(self, audit_event: AuditEvent) -> AuditEvent: ...
+    def create_audit_event(self, audit_event: AuditEvent) -> AuditEvent | AuditEventDTO: ...
 
-    def get_by_incident_id(self, incident_id: int) -> list[AuditEvent]: ...
+    def get_by_incident_id(self, incident_id: int) -> list[AuditEventDTO]: ...
 
-    def get_by_recommendation_id(self, recommendation_id: int) -> list[AuditEvent]: ...
+    def get_by_recommendation_id(self, recommendation_id: int) -> list[AuditEventDTO]: ...

@@ -25,6 +25,7 @@ from app.infrastructure.db.repositories.sqlalchemy_repositories import (
     SQLAlchemyTransferRecommendationRepository,
 )
 from app.infrastructure.db.unit_of_work import SQLAlchemyUnitOfWork
+from app.services.audit_query_service import AuditQueryService
 from app.services.candidate_discovery_service import CandidateDiscoveryService
 from app.services.interfaces import AIRecommendationProviderInterface, UnitOfWorkProtocol
 from app.services.planner_decision_service import PlannerDecisionService
@@ -155,4 +156,16 @@ def get_planner_decision_service(
         risk_repo=SQLAlchemyRiskIncidentRepository(db),
         audit_repo=SQLAlchemyAuditRepository(db),
         uow=SQLAlchemyUnitOfWork(db),
+    )
+
+
+def get_audit_query_service(
+    db: Annotated[Session, Depends(get_db)],
+) -> AuditQueryService:
+    """
+    Factory constructing AuditQueryService with concrete repositories.
+    """
+    return AuditQueryService(
+        risk_repo=SQLAlchemyRiskIncidentRepository(db),
+        audit_repo=SQLAlchemyAuditRepository(db),
     )

@@ -8,10 +8,16 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, status
 
-from app.api.deps import get_recommendation_service, get_risk_query_service
+from app.api.deps import (
+    get_audit_query_service,
+    get_recommendation_service,
+    get_risk_query_service,
+)
+from app.schemas.audit import AuditEventResponse
 from app.schemas.error import ErrorResponse
 from app.schemas.recommendation import RecommendationResponse
 from app.schemas.risk import RiskIncidentResponse
+from app.services.audit_query_service import AuditQueryService
 from app.services.recommendation_service import RecommendationService
 from app.services.risk_query_service import RiskQueryService
 
@@ -140,3 +146,43 @@ def trigger_recommendation(
         rationale=result.rationale,
         created_at=result.created_at,
     )
+
+
+@router.get(
+    "/{incident_id}/audit",
+    response_model=list[AuditEventResponse],
+    status_code=status.HTTP_200_OK,
+    summary="Get audit event trail for risk incident",
+    description=(
+        "Retrieves all audit events associated with a stockout risk incident ordered oldest first."
+    ),
+    responses={
+        200: {
+            "model": list[AuditEventResponse],
+            "description": "Audit event trail retrieved successfully",
+        },
+        404: {
+            "model": ErrorResponse,
+            "description": "Risk incident not found",
+        },
+        500: {"model": ErrorResponse, "description": "Internal server error"},
+    },
+)
+def get_incident_audit_trail(
+    incident_id: int,
+    audit_service: Annotated[AuditQueryService, Depends(get_audit_query_service)],
+) -> list[AuditEventResponse]:
+    events = audit_service.get_incident_audit_trail(incident_id)
+    return [
+        AuditEventResponse(
+            id=item.id,
+            incident_id=item.incident_id,
+            action=item.action,
+            recommendation_id=item.recommendation_id,
+            planner_id=item.planner_id,
+            input_snapshot_json=item.input_snapshot_json,
+            final_approved_qty=item.final_approved_qty,
+            created_at=item.created_at,
+        )
+        for item in events
+    ]

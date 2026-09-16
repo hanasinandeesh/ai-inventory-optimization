@@ -9,12 +9,18 @@ from sqlalchemy.orm import Session
 
 from app.api.deps import (
     get_ai_recommendation_provider,
+    get_audit_query_service,
     get_candidate_discovery_service,
     get_planner_decision_service,
     get_recommendation_service,
 )
 from app.core.config import settings
 from app.infrastructure.ai.gemini_provider import GeminiRecommendationProvider
+from app.infrastructure.db.repositories.sqlalchemy_repositories import (
+    SQLAlchemyAuditRepository,
+    SQLAlchemyRiskIncidentRepository,
+)
+from app.services.audit_query_service import AuditQueryService
 from app.services.candidate_discovery_service import CandidateDiscoveryService
 from app.services.dtos import AIRecommendationInputDTO, AIRecommendationOutputDTO
 from app.services.interfaces import AIRecommendationProviderInterface
@@ -89,3 +95,26 @@ def test_get_planner_decision_service_construction() -> None:
 
     assert isinstance(service, PlannerDecisionService)
     assert not hasattr(service, "_ai_provider")
+
+
+def test_get_audit_query_service_construction() -> None:
+    """Verify get_audit_query_service constructs AuditQueryService with concrete repositories
+    adhering to protocol abstractions and maintaining read-only isolation."""
+    mock_db = MagicMock(spec=Session)
+
+    service = get_audit_query_service(db=mock_db)
+
+    # 1. Service constructed successfully
+    assert isinstance(service, AuditQueryService)
+
+    # 2. Correct repository implementations injected
+    assert isinstance(service._risk_repo, SQLAlchemyRiskIncidentRepository)
+    assert isinstance(service._audit_repo, SQLAlchemyAuditRepository)
+
+    # 3. Injected repositories support protocol method contracts
+    assert callable(getattr(service._risk_repo, "get_by_id", None))
+    assert callable(getattr(service._audit_repo, "get_by_incident_id", None))
+
+    # 4. No transaction/write behavior introduced (no UoW, read-only)
+    assert not hasattr(service, "_uow")
+    assert not hasattr(service, "_write_repo")
