@@ -11,6 +11,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
+from app.domain.exceptions import RecommendationValidationError
 from app.schemas.error import ErrorResponse
 from app.services.exceptions import ResourceInactiveError, ResourceNotFoundError
 
@@ -39,6 +40,22 @@ async def resource_inactive_handler(request: Request, exc: ResourceInactiveError
     correlation_id = _get_correlation_id(request)
     error_payload = ErrorResponse(
         error_code="RESOURCE_INACTIVE",
+        message=str(exc),
+        details={},
+        correlation_id=correlation_id,
+    )
+    return JSONResponse(
+        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        content=error_payload.model_dump(),
+    )
+
+
+async def recommendation_validation_handler(
+    request: Request, exc: RecommendationValidationError
+) -> JSONResponse:
+    correlation_id = _get_correlation_id(request)
+    error_payload = ErrorResponse(
+        error_code="RECOMMENDATION_VALIDATION_FAILED",
         message=str(exc),
         details={},
         correlation_id=correlation_id,

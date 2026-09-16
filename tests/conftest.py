@@ -36,6 +36,7 @@ def test_db() -> Generator[Session, None, None]:
 @pytest.fixture(scope="function")
 def client(test_db: Session) -> Generator[TestClient, None, None]:
     """Provides FastAPI TestClient with overridden DB dependency."""
+
     def _override_get_db() -> Generator[Session, None, None]:
         yield test_db
 

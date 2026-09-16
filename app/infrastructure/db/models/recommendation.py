@@ -64,21 +64,15 @@ class TransferRecommendation(Base):
     )
 
     # Relationships
-    risk_incident: Mapped["RiskIncident"] = relationship(
-        back_populates="recommendations"
-    )
+    risk_incident: Mapped["RiskIncident"] = relationship(back_populates="recommendations")
     source_dc: Mapped["DistributionCenter"] = relationship(
         foreign_keys=[source_dc_id], back_populates="outbound_recommendations"
     )
     target_dc: Mapped["DistributionCenter"] = relationship(
         foreign_keys=[target_dc_id], back_populates="inbound_recommendations"
     )
-    product: Mapped["Product"] = relationship(
-        back_populates="transfer_recommendations"
-    )
-    audit_events: Mapped[list["AuditEvent"]] = relationship(
-        back_populates="recommendation"
-    )
+    product: Mapped["Product"] = relationship(back_populates="transfer_recommendations")
+    audit_events: Mapped[list["AuditEvent"]] = relationship(back_populates="recommendation")
 
     __table_args__ = (
         CheckConstraint("source_dc_id != target_dc_id", name="ck_rec_diff_dcs"),

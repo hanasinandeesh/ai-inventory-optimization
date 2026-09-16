@@ -17,9 +17,7 @@ if settings.DATABASE_URL.startswith("sqlite:///"):
         Path(db_path).parent.mkdir(parents=True, exist_ok=True)
 
 # Configure connection arguments for SQLite
-connect_args = (
-    {"check_same_thread": False} if settings.DATABASE_URL.startswith("sqlite") else {}
-)
+connect_args = {"check_same_thread": False} if settings.DATABASE_URL.startswith("sqlite") else {}
 
 engine = create_engine(
     settings.DATABASE_URL,

@@ -89,8 +89,6 @@ class InventoryBalance(Base):
         UniqueConstraint("dc_id", "product_id", name="uq_inventory_balance_dc_product"),
         CheckConstraint("on_hand_qty >= 0", name="ck_inv_balance_on_hand_nonneg"),
         CheckConstraint("reserved_qty >= 0", name="ck_inv_balance_reserved_nonneg"),
-        CheckConstraint(
-            "on_hand_qty >= reserved_qty", name="ck_inv_balance_on_hand_ge_reserved"
-        ),
+        CheckConstraint("on_hand_qty >= reserved_qty", name="ck_inv_balance_on_hand_ge_reserved"),
         Index("ix_inventory_balances_dc_product", "dc_id", "product_id"),
     )

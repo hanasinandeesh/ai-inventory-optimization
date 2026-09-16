@@ -1,5 +1,8 @@
-"""
-AI / LLM Infrastructure package.
+"""AI infrastructure adapter package."""
 
-Contains LLM provider adapters, structured prompt templates, output parsers, and timeout handling.
-"""
+from app.infrastructure.ai.gemini_provider import (
+    GeminiProviderError,
+    GeminiRecommendationProvider,
+)
+
+__all__ = ["GeminiProviderError", "GeminiRecommendationProvider"]

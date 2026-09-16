@@ -28,9 +28,7 @@ class RiskAssessmentResult:
     severity: RiskSeverity
 
 
-def calculate_days_to_stockout(
-    available_inventory: int, average_daily_demand: float
-) -> float:
+def calculate_days_to_stockout(available_inventory: int, average_daily_demand: float) -> float:
     """
     Computes Days to Stockout (DUS).
     Formula: Available Inventory / Average Daily Demand Rate
@@ -47,9 +45,7 @@ def calculate_days_to_stockout(
     return available_inventory / average_daily_demand
 
 
-def calculate_safety_stock_units(
-    safety_stock_days: int, average_daily_demand: float
-) -> float:
+def calculate_safety_stock_units(safety_stock_days: int, average_daily_demand: float) -> float:
     """
     Computes target safety stock requirement in units.
     Formula: safety_stock_days * average_daily_demand
@@ -65,9 +61,7 @@ def calculate_safety_stock_units(
     return float(safety_stock_days * average_daily_demand)
 
 
-def calculate_shortage_quantity(
-    target_safety_stock_units: float, available_inventory: int
-) -> int:
+def calculate_shortage_quantity(target_safety_stock_units: float, available_inventory: int) -> int:
     """
     Computes safety stock shortage in units.
     Formula: max(0, target_safety_stock_units - available_inventory)
@@ -94,9 +88,7 @@ def classify_risk_severity(days_to_stockout: float) -> RiskSeverity:
         return RiskSeverity.LOW
 
 
-def calculate_projected_stockout_date(
-    detection_date: date, days_to_stockout: float
-) -> date:
+def calculate_projected_stockout_date(detection_date: date, days_to_stockout: float) -> date:
     """
     Computes projected stockout date.
     Formula: detection_date + floor(days_to_stockout)
@@ -113,9 +105,7 @@ def evaluate_stockout_risk(
     """Orchestrates deterministic stockout risk assessment for a SKU at a facility."""
     dus = calculate_days_to_stockout(available_inventory, average_daily_demand)
     projected_date = calculate_projected_stockout_date(detection_date, dus)
-    target_safety_stock = calculate_safety_stock_units(
-        safety_stock_days, average_daily_demand
-    )
+    target_safety_stock = calculate_safety_stock_units(safety_stock_days, average_daily_demand)
     shortage = calculate_shortage_quantity(target_safety_stock, available_inventory)
     severity = classify_risk_severity(dus)
 

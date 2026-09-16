@@ -41,9 +41,7 @@ def calculate_source_surplus(
     return max(0, int(round(surplus)))
 
 
-def calculate_feasible_transfer_quantity(
-    target_shortage_qty: int, source_surplus: int
-) -> int:
+def calculate_feasible_transfer_quantity(target_shortage_qty: int, source_surplus: int) -> int:
     """
     Computes maximum feasible transfer quantity between target and candidate source.
     Formula: min(target_shortage_qty, source_surplus)
@@ -53,9 +51,7 @@ def calculate_feasible_transfer_quantity(
             f"Target shortage quantity cannot be negative (got {target_shortage_qty})"
         )
     if source_surplus < 0:
-        raise InvalidTransferError(
-            f"Source surplus cannot be negative (got {source_surplus})"
-        )
+        raise InvalidTransferError(f"Source surplus cannot be negative (got {source_surplus})")
 
     return min(target_shortage_qty, source_surplus)
 
@@ -93,9 +89,7 @@ def is_candidate_feasible(
     return True
 
 
-def calculate_estimated_transfer_cost(
-    recommended_qty: int, route_unit_cost: float
-) -> float:
+def calculate_estimated_transfer_cost(recommended_qty: int, route_unit_cost: float) -> float:
     """
     Computes estimated total transfer cost.
     Formula: recommended_qty * route_unit_cost
@@ -106,8 +100,6 @@ def calculate_estimated_transfer_cost(
             f"Recommended quantity must be strictly positive (got {recommended_qty})"
         )
     if route_unit_cost < 0:
-        raise InvalidTransferError(
-            f"Route unit cost cannot be negative (got {route_unit_cost})"
-        )
+        raise InvalidTransferError(f"Route unit cost cannot be negative (got {route_unit_cost})")
 
     return round(float(recommended_qty * route_unit_cost), 2)

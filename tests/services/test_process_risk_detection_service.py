@@ -485,13 +485,14 @@ def test_repeated_detection_idempotency():
     assert res2.is_new_incident is False
     assert res2.incident_id == res1.incident_id
     assert len(risk_repo.incidents) == 1  # No duplicate created!
-    assert len(audit_repo.events) == 2    # Second audit event recorded
+    assert len(audit_repo.events) == 2  # Second audit event recorded
 
 
 def test_severity_boundary_cases():
     """9. Test severity boundaries through service orchestration."""
     dc, product, balance, policy, signals, detection_date = make_test_setup(
-        on_hand=200, daily_demand_val=40  # 200 / 40 = 5.0 days
+        on_hand=200,
+        daily_demand_val=40,  # 200 / 40 = 5.0 days
     )
 
     dc_repo = FakeDistributionCenterRepository([dc])
@@ -553,6 +554,7 @@ def test_no_prohibited_imports_in_service():
 
     # Also verify imports inspectable source text does NOT reference app.infrastructure.db.models
     import inspect
+
     source = inspect.getsource(service_module)
     assert "app.infrastructure" not in source
 
@@ -568,9 +570,7 @@ def test_sqlalchemy_integration_golden_scenario(test_db: Session):
     test_db.add_all([dc, product])
     test_db.commit()
 
-    balance = InventoryBalance(
-        dc_id=dc.id, product_id=product.id, on_hand_qty=100, reserved_qty=0
-    )
+    balance = InventoryBalance(dc_id=dc.id, product_id=product.id, on_hand_qty=100, reserved_qty=0)
     policy = InventoryPolicy(
         dc_id=dc.id, product_id=product.id, safety_stock_days=7.0, is_active=True
     )

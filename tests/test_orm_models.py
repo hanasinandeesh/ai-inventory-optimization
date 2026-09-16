@@ -86,9 +86,7 @@ def test_basic_model_creation_and_relationships(db_session: Session) -> None:
         unit_of_measure="CS",
         pack_size=1,
     )
-    dc_chi = DistributionCenter(
-        code="DC-CHI", name="Chicago DC", city="Chicago", state="IL"
-    )
+    dc_chi = DistributionCenter(code="DC-CHI", name="Chicago DC", city="Chicago", state="IL")
     dc_ind = DistributionCenter(
         code="DC-IND", name="Indianapolis DC", city="Indianapolis", state="IN"
     )
@@ -197,9 +195,7 @@ def test_basic_model_creation_and_relationships(db_session: Session) -> None:
     assert fetched_dc_chi.inbound_routes[0].source_dc.code == "DC-IND"
 
     fetched_incident = (
-        db_session.query(RiskIncident)
-        .filter_by(incident_code="INC-20260916-001")
-        .one()
+        db_session.query(RiskIncident).filter_by(incident_code="INC-20260916-001").one()
     )
     assert len(fetched_incident.recommendations) == 1
     assert fetched_incident.recommendations[0].recommended_qty == 180
@@ -333,7 +329,7 @@ def test_audit_event_nullable_fields(db_session: Session) -> None:
     system_audit = AuditEvent(
         incident_id=incident.id,
         recommendation_id=None,  # Nullable
-        planner_id=None,          # Nullable (System action)
+        planner_id=None,  # Nullable (System action)
         action="RISK_DETECTED",
         input_snapshot_json='{"status": "detected"}',
     )
@@ -355,9 +351,7 @@ def test_inventory_policy_and_po_check_constraints(db_session: Session) -> None:
     db_session.commit()
 
     # Safety stock days < 0 violation
-    invalid_policy = InventoryPolicy(
-        dc_id=dc.id, product_id=product.id, safety_stock_days=-1.0
-    )
+    invalid_policy = InventoryPolicy(dc_id=dc.id, product_id=product.id, safety_stock_days=-1.0)
     db_session.add(invalid_policy)
     with pytest.raises(IntegrityError):
         db_session.commit()
@@ -474,4 +468,3 @@ def test_unique_constraints_all_entities(db_session: Session) -> None:
     with pytest.raises(IntegrityError):
         db_session.commit()
     db_session.rollback()
-

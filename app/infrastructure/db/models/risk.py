@@ -19,9 +19,7 @@ class RiskIncident(Base):
     __tablename__ = "risk_incidents"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    incident_code: Mapped[str] = mapped_column(
-        String(100), unique=True, nullable=False, index=True
-    )
+    incident_code: Mapped[str] = mapped_column(String(100), unique=True, nullable=False, index=True)
     target_dc_id: Mapped[int] = mapped_column(
         ForeignKey("distribution_centers.id", ondelete="RESTRICT"), nullable=False, index=True
     )
@@ -39,16 +37,12 @@ class RiskIncident(Base):
     )
 
     # Relationships
-    target_dc: Mapped["DistributionCenter"] = relationship(
-        back_populates="risk_incidents"
-    )
+    target_dc: Mapped["DistributionCenter"] = relationship(back_populates="risk_incidents")
     product: Mapped["Product"] = relationship(back_populates="risk_incidents")
     recommendations: Mapped[list["TransferRecommendation"]] = relationship(
         back_populates="risk_incident"
     )
-    audit_events: Mapped[list["AuditEvent"]] = relationship(
-        back_populates="risk_incident"
-    )
+    audit_events: Mapped[list["AuditEvent"]] = relationship(back_populates="risk_incident")
 
     __table_args__ = (
         Index(

@@ -45,9 +45,7 @@ def test_alembic_migration_creates_all_13_tables(migrated_db: Path) -> None:
     try:
         tables = {
             t[0]
-            for t in conn.execute(
-                "SELECT name FROM sqlite_master WHERE type='table'"
-            ).fetchall()
+            for t in conn.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()
         }
         assert expected_tables.issubset(tables)
         assert len(tables) == 14
@@ -68,9 +66,7 @@ def test_alembic_downgrade_and_reupgrade(migrated_db: Path) -> None:
     try:
         tables = {
             t[0]
-            for t in conn.execute(
-                "SELECT name FROM sqlite_master WHERE type='table'"
-            ).fetchall()
+            for t in conn.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()
         }
         assert "suppliers" not in tables
         assert "risk_incidents" not in tables
@@ -84,9 +80,7 @@ def test_alembic_downgrade_and_reupgrade(migrated_db: Path) -> None:
     try:
         tables = {
             t[0]
-            for t in conn.execute(
-                "SELECT name FROM sqlite_master WHERE type='table'"
-            ).fetchall()
+            for t in conn.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()
         }
         assert "suppliers" in tables
         assert "risk_incidents" in tables

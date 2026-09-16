@@ -14,18 +14,21 @@ from app.domain.transfer import (
 
 
 def test_calculate_source_surplus_positive() -> None:
-    assert calculate_source_surplus(
-        source_available_inventory=650, source_safety_stock_units=200.0
-    ) == 450
+    assert (
+        calculate_source_surplus(source_available_inventory=650, source_safety_stock_units=200.0)
+        == 450
+    )
 
 
 def test_calculate_source_surplus_zero_or_negative() -> None:
-    assert calculate_source_surplus(
-        source_available_inventory=200, source_safety_stock_units=200.0
-    ) == 0
-    assert calculate_source_surplus(
-        source_available_inventory=150, source_safety_stock_units=200.0
-    ) == 0
+    assert (
+        calculate_source_surplus(source_available_inventory=200, source_safety_stock_units=200.0)
+        == 0
+    )
+    assert (
+        calculate_source_surplus(source_available_inventory=150, source_safety_stock_units=200.0)
+        == 0
+    )
 
 
 def test_calculate_source_surplus_invalid_inputs_raise_errors() -> None:
@@ -42,17 +45,20 @@ def test_calculate_feasible_transfer_quantity() -> None:
 
 def test_is_candidate_feasible_rules() -> None:
     # Valid Feasible Candidate
-    assert is_candidate_feasible(
-        source_dc_code="DC-IND",
-        target_dc_code="DC-CHI",
-        source_is_active=True,
-        target_is_active=True,
-        route_is_active=True,
-        source_surplus=450,
-        feasible_quantity=180,
-        transit_days=1,
-        days_to_stockout=2.5,
-    ) is True
+    assert (
+        is_candidate_feasible(
+            source_dc_code="DC-IND",
+            target_dc_code="DC-CHI",
+            source_is_active=True,
+            target_is_active=True,
+            route_is_active=True,
+            source_surplus=450,
+            feasible_quantity=180,
+            transit_days=1,
+            days_to_stockout=2.5,
+        )
+        is True
+    )
 
     # Same Source and Target DC
     assert is_candidate_feasible("DC-CHI", "DC-CHI", True, True, True, 450, 180, 1, 2.5) is False

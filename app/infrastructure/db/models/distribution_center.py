@@ -31,9 +31,7 @@ class DistributionCenter(Base):
     __tablename__ = "distribution_centers"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    code: Mapped[str] = mapped_column(
-        String(50), unique=True, nullable=False, index=True
-    )
+    code: Mapped[str] = mapped_column(String(50), unique=True, nullable=False, index=True)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     city: Mapped[str] = mapped_column(String(100), nullable=False)
     state: Mapped[str] = mapped_column(String(50), nullable=False)
@@ -55,15 +53,11 @@ class DistributionCenter(Base):
     inventory_balances: Mapped[list["InventoryBalance"]] = relationship(
         back_populates="distribution_center"
     )
-    purchase_orders: Mapped[list["PurchaseOrder"]] = relationship(
-        back_populates="destination_dc"
-    )
+    purchase_orders: Mapped[list["PurchaseOrder"]] = relationship(back_populates="destination_dc")
     daily_demand_signals: Mapped[list["DailyDemandSignal"]] = relationship(
         back_populates="distribution_center"
     )
-    risk_incidents: Mapped[list["RiskIncident"]] = relationship(
-        back_populates="target_dc"
-    )
+    risk_incidents: Mapped[list["RiskIncident"]] = relationship(back_populates="target_dc")
     outbound_recommendations: Mapped[list["TransferRecommendation"]] = relationship(
         foreign_keys="[TransferRecommendation.source_dc_id]", back_populates="source_dc"
     )
@@ -86,9 +80,7 @@ class DCRoute(Base):
     )
     transit_days: Mapped[int] = mapped_column(nullable=False)
     cost_per_unit: Mapped[Decimal] = mapped_column(Numeric(10, 2), nullable=False)
-    distance_miles: Mapped[Decimal | None] = mapped_column(
-        Numeric(10, 2), nullable=True
-    )
+    distance_miles: Mapped[Decimal | None] = mapped_column(Numeric(10, 2), nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False

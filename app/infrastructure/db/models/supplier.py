@@ -27,9 +27,7 @@ class Supplier(Base):
     __tablename__ = "suppliers"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    supplier_code: Mapped[str] = mapped_column(
-        String(50), unique=True, nullable=False, index=True
-    )
+    supplier_code: Mapped[str] = mapped_column(String(50), unique=True, nullable=False, index=True)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     reliability_rating: Mapped[Decimal] = mapped_column(
         Numeric(3, 2), nullable=False, default=Decimal("1.00")
@@ -40,12 +38,8 @@ class Supplier(Base):
     )
 
     # Relationships
-    supplier_products: Mapped[list["SupplierProduct"]] = relationship(
-        back_populates="supplier"
-    )
-    purchase_orders: Mapped[list["PurchaseOrder"]] = relationship(
-        back_populates="supplier"
-    )
+    supplier_products: Mapped[list["SupplierProduct"]] = relationship(back_populates="supplier")
+    purchase_orders: Mapped[list["PurchaseOrder"]] = relationship(back_populates="supplier")
 
 
 class SupplierProduct(Base):

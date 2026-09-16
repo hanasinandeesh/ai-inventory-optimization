@@ -28,7 +28,7 @@ def test_domain_isolation_boundaries() -> None:
 
     # Assert domain submodules do not import prohibited frameworks
     prohibited_frameworks = ["fastapi", "sqlalchemy", "pydantic", "httpx"]
-    
+
     for mod_name, mod in list(sys.modules.items()):
         if mod_name.startswith(domain_module_name) and mod is not None:
             # Check module globals / attributes for prohibited imports

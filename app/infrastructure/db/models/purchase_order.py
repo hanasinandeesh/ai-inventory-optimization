@@ -27,9 +27,7 @@ class PurchaseOrder(Base):
     __tablename__ = "purchase_orders"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    po_number: Mapped[str] = mapped_column(
-        String(100), unique=True, nullable=False, index=True
-    )
+    po_number: Mapped[str] = mapped_column(String(100), unique=True, nullable=False, index=True)
     supplier_id: Mapped[int] = mapped_column(
         ForeignKey("suppliers.id", ondelete="RESTRICT"), nullable=False, index=True
     )
@@ -49,12 +47,8 @@ class PurchaseOrder(Base):
     # Relationships
     supplier: Mapped["Supplier"] = relationship(back_populates="purchase_orders")
     product: Mapped["Product"] = relationship(back_populates="purchase_orders")
-    destination_dc: Mapped["DistributionCenter"] = relationship(
-        back_populates="purchase_orders"
-    )
-    supply_events: Mapped[list["SupplyEvent"]] = relationship(
-        back_populates="purchase_order"
-    )
+    destination_dc: Mapped["DistributionCenter"] = relationship(back_populates="purchase_orders")
+    supply_events: Mapped[list["SupplyEvent"]] = relationship(back_populates="purchase_order")
 
     __table_args__ = (
         CheckConstraint("ordered_qty > 0", name="ck_po_ordered_qty_pos"),
@@ -86,9 +80,7 @@ class SupplyEvent(Base):
     )
 
     # Relationships
-    purchase_order: Mapped["PurchaseOrder"] = relationship(
-        back_populates="supply_events"
-    )
+    purchase_order: Mapped["PurchaseOrder"] = relationship(back_populates="supply_events")
 
     __table_args__ = (
         CheckConstraint("delay_days >= 0", name="ck_supply_event_delay_nonneg"),

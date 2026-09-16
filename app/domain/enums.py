@@ -5,9 +5,9 @@ class RiskSeverity(StrEnum):
     """Stockout risk severity levels based on Days to Stockout (DUS)."""
 
     CRITICAL = "CRITICAL"  # DUS < 3 days
-    HIGH = "HIGH"          # 3 <= DUS < 7 days
-    MEDIUM = "MEDIUM"      # 7 <= DUS <= 14 days
-    LOW = "LOW"            # DUS > 14 days
+    HIGH = "HIGH"  # 3 <= DUS < 7 days
+    MEDIUM = "MEDIUM"  # 7 <= DUS <= 14 days
+    LOW = "LOW"  # DUS > 14 days
 
 
 class IncidentStatus(StrEnum):
@@ -43,4 +43,3 @@ class PlannerAction(StrEnum):
     NO_FEASIBLE_SOURCE_FOUND = "NO_FEASIBLE_SOURCE_FOUND"
     PLANNER_APPROVED = "PLANNER_APPROVED"
     PLANNER_REJECTED = "PLANNER_REJECTED"
-

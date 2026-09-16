@@ -42,8 +42,7 @@ def select_fallback_candidate(
     """
     if not prevalidated_candidates:
         raise InfeasibleTransferError(
-            "No pre-validated feasible candidate source DCs "
-            "available for selection"
+            "No pre-validated feasible candidate source DCs available for selection"
         )
 
     # Sort candidates by business ranking policy
@@ -51,9 +50,9 @@ def select_fallback_candidate(
         prevalidated_candidates,
         key=lambda c: (
             not c.can_arrive_before_stockout,  # True (0) prioritized over False (1)
-            c.transit_days,                    # Shorter transit time
-            c.estimated_total_cost,             # Lower total cost
-            -c.available_surplus,              # Higher surplus
+            c.transit_days,  # Shorter transit time
+            c.estimated_total_cost,  # Lower total cost
+            -c.available_surplus,  # Higher surplus
         ),
     )
     return sorted_candidates[0]

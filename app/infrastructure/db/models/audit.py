@@ -35,9 +35,7 @@ class AuditEvent(Base):
     )
 
     # Relationships
-    risk_incident: Mapped["RiskIncident"] = relationship(
-        back_populates="audit_events"
-    )
+    risk_incident: Mapped["RiskIncident"] = relationship(back_populates="audit_events")
     recommendation: Mapped[Optional["TransferRecommendation"]] = relationship(
         back_populates="audit_events"
     )
