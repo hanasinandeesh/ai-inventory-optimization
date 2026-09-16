@@ -1,6 +1,7 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, status
+from fastapi.responses import JSONResponse
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
@@ -19,20 +20,22 @@ router = APIRouter()
 )
 def get_health(
     db: Annotated[Session, Depends(get_db)],
-) -> HealthCheckResponse:
+) -> HealthCheckResponse | JSONResponse:
     try:
         check_db_connection(db)
         db_status = "connected"
-    except SQLAlchemyError as err:
-        raise HTTPException(
+    except SQLAlchemyError:
+        return JSONResponse(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail={
-                "status": "error",
-                "version": settings.VERSION,
-                "environment": settings.ENVIRONMENT,
-                "database": "disconnected",
+            content={
+                "detail": {
+                    "status": "error",
+                    "version": settings.VERSION,
+                    "environment": settings.ENVIRONMENT,
+                    "database": "disconnected",
+                }
             },
-        ) from err
+        )
 
     return HealthCheckResponse(
         status="ok",
@@ -40,4 +43,3 @@ def get_health(
         environment=settings.ENVIRONMENT,
         database=db_status,
     )
-

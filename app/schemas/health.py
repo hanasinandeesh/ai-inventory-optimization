@@ -8,4 +8,3 @@ class HealthCheckResponse(BaseModel):
     database: str = Field(
         ..., description="Database connection status ('connected' or 'disconnected')"
     )
-
