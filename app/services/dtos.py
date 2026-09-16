@@ -136,6 +136,19 @@ class AuditEventCreateData:
 
 
 @dataclass(frozen=True)
+class DCRouteDTO:
+    """Application DTO for DC Route entity data."""
+
+    id: int
+    source_dc_id: int
+    target_dc_id: int
+    transit_days: int
+    cost_per_unit: float
+    is_active: bool
+    distance_miles: float | None = None
+
+
+@dataclass(frozen=True)
 class ProcessRiskDetectionResult:
     """Dataclass representing the result of ProcessRiskDetectionService."""
 
@@ -155,3 +168,17 @@ class ProcessRiskDetectionResult:
     status: str
     is_new_incident: bool
     detected_at: datetime
+
+
+@dataclass(frozen=True)
+class CandidateDiscoveryResultDTO:
+    """Dataclass representing the output of CandidateDiscoveryService."""
+
+    incident_id: int
+    incident_code: str
+    target_dc_id: int
+    target_dc_code: str
+    product_id: int
+    target_shortage_qty: int
+    days_to_stockout: float
+    feasible_candidates: list  # list[PreValidatedCandidate]

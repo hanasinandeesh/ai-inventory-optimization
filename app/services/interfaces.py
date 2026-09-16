@@ -11,6 +11,7 @@ from app.services.dtos import (
     AuditEventCreateData,
     AuditEventDTO,
     DailyDemandSignalDTO,
+    DCRouteDTO,
     DistributionCenterDTO,
     InventoryBalanceDTO,
     InventoryPolicyDTO,
@@ -33,9 +34,7 @@ class ProductRepositoryInterface(Protocol):
 class InventoryRepositoryInterface(Protocol):
     """Protocol for inventory balance queries."""
 
-    def get_balance(
-        self, dc_id: int, product_id: int
-    ) -> InventoryBalanceDTO | None: ...
+    def get_balance(self, dc_id: int, product_id: int) -> InventoryBalanceDTO | None: ...
 
 
 class DemandRepositoryInterface(Protocol):
@@ -49,9 +48,7 @@ class DemandRepositoryInterface(Protocol):
 class InventoryPolicyRepositoryInterface(Protocol):
     """Protocol for SKU/DC inventory policy queries."""
 
-    def get_active_policy(
-        self, dc_id: int, product_id: int
-    ) -> InventoryPolicyDTO | None: ...
+    def get_active_policy(self, dc_id: int, product_id: int) -> InventoryPolicyDTO | None: ...
 
 
 class DistributionCenterRepositoryInterface(Protocol):
@@ -61,9 +58,13 @@ class DistributionCenterRepositoryInterface(Protocol):
 
     def get_by_code(self, code: str) -> DistributionCenterDTO | None: ...
 
-    def get_active_source_dcs(
-        self, exclude_dc_id: int
-    ) -> list[DistributionCenterDTO]: ...
+    def get_active_source_dcs(self, exclude_dc_id: int) -> list[DistributionCenterDTO]: ...
+
+
+class RouteRepositoryInterface(Protocol):
+    """Protocol for transportation route queries."""
+
+    def get_active_route(self, source_dc_id: int, target_dc_id: int) -> DCRouteDTO | None: ...
 
 
 class RiskIncidentRepositoryInterface(Protocol):
@@ -73,9 +74,7 @@ class RiskIncidentRepositoryInterface(Protocol):
         self, target_dc_id: int, product_id: int, status: str = "OPEN"
     ) -> RiskIncidentDTO | None: ...
 
-    def create_incident(
-        self, incident_data: RiskIncidentCreateData
-    ) -> RiskIncidentDTO: ...
+    def create_incident(self, incident_data: RiskIncidentCreateData) -> RiskIncidentDTO: ...
 
     def update_incident(
         self, incident_id: int, update_data: RiskIncidentUpdateData
@@ -91,15 +90,11 @@ class RiskIncidentRepositoryInterface(Protocol):
 class AuditRepositoryInterface(Protocol):
     """Protocol for append-only audit event logging and retrieval."""
 
-    def create_audit_event(
-        self, audit_data: AuditEventCreateData
-    ) -> AuditEventDTO: ...
+    def create_audit_event(self, audit_data: AuditEventCreateData) -> AuditEventDTO: ...
 
     def get_by_incident_id(self, incident_id: int) -> list[AuditEventDTO]: ...
 
-    def get_by_recommendation_id(
-        self, recommendation_id: int
-    ) -> list[AuditEventDTO]: ...
+    def get_by_recommendation_id(self, recommendation_id: int) -> list[AuditEventDTO]: ...
 
 
 __all__ = [
@@ -110,5 +105,6 @@ __all__ = [
     "InventoryRepositoryInterface",
     "ProductRepositoryInterface",
     "RiskIncidentRepositoryInterface",
+    "RouteRepositoryInterface",
     "UnitOfWorkProtocol",
 ]
