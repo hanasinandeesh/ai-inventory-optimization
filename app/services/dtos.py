@@ -1,0 +1,157 @@
+"""
+Application Data Transfer Objects (DTOs) for Application Services.
+Must NOT depend on FastAPI, Pydantic, or SQLAlchemy ORM models.
+"""
+
+from dataclasses import dataclass
+from datetime import date, datetime
+
+
+@dataclass(frozen=True)
+class DistributionCenterDTO:
+    """Application DTO for Distribution Center entity data."""
+
+    id: int
+    code: str
+    name: str
+    city: str
+    state: str
+    is_active: bool
+
+
+@dataclass(frozen=True)
+class ProductDTO:
+    """Application DTO for Product entity data."""
+
+    id: int
+    sku: str
+    name: str
+    category: str
+    unit_of_measure: str
+    pack_size: int = 1
+
+
+@dataclass(frozen=True)
+class InventoryBalanceDTO:
+    """Application DTO for Inventory Balance entity data."""
+
+    id: int
+    dc_id: int
+    product_id: int
+    on_hand_qty: int
+    reserved_qty: int
+
+
+@dataclass(frozen=True)
+class DailyDemandSignalDTO:
+    """Application DTO for Daily Demand Signal data."""
+
+    id: int
+    dc_id: int
+    product_id: int
+    signal_date: date
+    daily_demand_qty: int
+
+
+@dataclass(frozen=True)
+class InventoryPolicyDTO:
+    """Application DTO for Inventory Policy data."""
+
+    id: int
+    dc_id: int
+    product_id: int
+    safety_stock_days: float
+    min_reorder_qty: int = 0
+    is_active: bool = True
+
+
+@dataclass(frozen=True)
+class RiskIncidentDTO:
+    """Application DTO for Risk Incident entity data."""
+
+    id: int
+    incident_code: str
+    target_dc_id: int
+    product_id: int
+    current_dos: float
+    days_to_stockout: float
+    projected_stockout_date: date
+    shortage_qty: float
+    severity: str
+    status: str
+    detected_at: datetime | None = None
+
+
+@dataclass(frozen=True)
+class RiskIncidentCreateData:
+    """Input DTO for creating a new Risk Incident."""
+
+    incident_code: str
+    target_dc_id: int
+    product_id: int
+    current_dos: float
+    days_to_stockout: float
+    projected_stockout_date: date
+    shortage_qty: float
+    severity: str
+    status: str = "OPEN"
+
+
+@dataclass(frozen=True)
+class RiskIncidentUpdateData:
+    """Input DTO for updating an existing Risk Incident."""
+
+    incident_id: int
+    current_dos: float
+    days_to_stockout: float
+    projected_stockout_date: date
+    shortage_qty: float
+    severity: str
+
+
+@dataclass(frozen=True)
+class AuditEventDTO:
+    """Application DTO for Audit Event data."""
+
+    id: int
+    incident_id: int
+    action: str
+    recommendation_id: int | None = None
+    planner_id: str | None = None
+    input_snapshot_json: str | None = None
+    final_approved_qty: int | None = None
+    created_at: datetime | None = None
+
+
+@dataclass(frozen=True)
+class AuditEventCreateData:
+    """Input DTO for creating an Audit Event."""
+
+    incident_id: int
+    action: str
+    recommendation_id: int | None = None
+    planner_id: str | None = None
+    input_snapshot_json: str | None = None
+    final_approved_qty: int | None = None
+
+
+@dataclass(frozen=True)
+class ProcessRiskDetectionResult:
+    """Dataclass representing the result of ProcessRiskDetectionService."""
+
+    incident_id: int
+    incident_code: str
+    target_dc_id: int
+    target_dc_code: str
+    product_id: int
+    product_sku: str
+    available_inventory: int
+    average_daily_demand: float
+    days_to_stockout: float
+    projected_stockout_date: date
+    target_safety_stock_units: float
+    shortage_quantity: int
+    severity: str
+    status: str
+    is_new_incident: bool
+    detected_at: datetime

@@ -5,8 +5,17 @@ from app.infrastructure.db.models.audit import AuditEvent
 from app.infrastructure.db.models.demand import DailyDemandSignal
 from app.infrastructure.db.models.distribution_center import DCRoute, DistributionCenter
 from app.infrastructure.db.models.inventory import InventoryBalance, InventoryPolicy
+from app.infrastructure.db.models.product import Product
 from app.infrastructure.db.models.recommendation import TransferRecommendation
 from app.infrastructure.db.models.risk import RiskIncident
+
+
+class ProductRepositoryInterface(Protocol):
+    """Protocol for product catalog queries."""
+
+    def get_by_id(self, product_id: int) -> Product | None: ...
+
+    def get_by_sku(self, sku: str) -> Product | None: ...
 
 
 class InventoryRepositoryInterface(Protocol):
