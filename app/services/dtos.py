@@ -5,6 +5,9 @@ Must NOT depend on FastAPI, Pydantic, or SQLAlchemy ORM models.
 
 from dataclasses import dataclass
 from datetime import date, datetime
+from decimal import Decimal
+
+from app.domain.transfer import PreValidatedCandidate
 
 
 @dataclass(frozen=True)
@@ -83,6 +86,25 @@ class RiskIncidentDTO:
 
 
 @dataclass(frozen=True)
+class RiskIncidentDetailDTO:
+    """Application DTO representing a fully resolved Risk Incident with DC code and SKU."""
+
+    id: int
+    incident_code: str
+    target_dc_id: int
+    target_dc_code: str
+    product_id: int
+    sku: str
+    current_dos: float
+    days_to_stockout: float
+    projected_stockout_date: date
+    shortage_qty: float
+    severity: str
+    status: str
+    detected_at: datetime
+
+
+@dataclass(frozen=True)
 class RiskIncidentCreateData:
     """Input DTO for creating a new Risk Incident."""
 
@@ -95,6 +117,7 @@ class RiskIncidentCreateData:
     shortage_qty: float
     severity: str
     status: str = "OPEN"
+    detected_at: datetime | None = None
 
 
 @dataclass(frozen=True)
@@ -181,4 +204,91 @@ class CandidateDiscoveryResultDTO:
     product_id: int
     target_shortage_qty: int
     days_to_stockout: float
-    feasible_candidates: list  # list[PreValidatedCandidate]
+    feasible_candidates: list[PreValidatedCandidate]
+
+
+@dataclass(frozen=True)
+class AIRecommendationInputDTO:
+    """Pure DTO containing business context for AI recommendation ranking."""
+
+    incident_code: str
+    target_dc_code: str
+    product_sku: str
+    product_name: str
+    category: str
+    days_to_stockout: float
+    shortage_qty: int
+    severity: str
+    prevalidated_candidates: list[PreValidatedCandidate]
+
+
+@dataclass(frozen=True)
+class AIRecommendationOutputDTO:
+    """Pure DTO representing the response from an AI provider."""
+
+    selected_candidate_id: str
+    rationale: str
+
+
+@dataclass(frozen=True)
+class TransferRecommendationCreateData:
+    """Input dataclass for creating a TransferRecommendation record."""
+
+    recommendation_code: str
+    incident_id: int
+    source_dc_id: int
+    target_dc_id: int
+    product_id: int
+    recommended_qty: int
+    feasible_qty_snapshot: int
+    source_surplus_snapshot: int
+    transit_days_snapshot: int
+    route_unit_cost_snapshot: Decimal
+    estimated_cost_snapshot: Decimal
+    rationale: str
+    recommendation_source: str
+    status: str = "PROPOSED"
+
+
+@dataclass(frozen=True)
+class TransferRecommendationDTO:
+    """Application DTO representing a persisted TransferRecommendation entity."""
+
+    id: int
+    recommendation_code: str
+    incident_id: int
+    source_dc_id: int
+    target_dc_id: int
+    product_id: int
+    recommended_qty: int
+    feasible_qty_snapshot: int
+    source_surplus_snapshot: int
+    transit_days_snapshot: int
+    route_unit_cost_snapshot: Decimal
+    estimated_cost_snapshot: Decimal
+    rationale: str
+    recommendation_source: str
+    status: str
+    created_at: datetime | None = None
+
+
+@dataclass(frozen=True)
+class RecommendationResultDTO:
+    """Dataclass representing the outcome of RecommendationService execution."""
+
+    has_recommendation: bool
+    status: str
+    recommendation_id: int | None = None
+    recommendation_code: str | None = None
+    incident_id: int | None = None
+    source_dc_id: int | None = None
+    source_dc_code: str | None = None
+    target_dc_id: int | None = None
+    target_dc_code: str | None = None
+    product_id: int | None = None
+    product_sku: str | None = None
+    recommended_qty: int | None = None
+    estimated_total_cost: Decimal | None = None
+    recommendation_source: str | None = None
+    rationale: str | None = None
+    created_at: datetime | None = None

@@ -28,6 +28,8 @@ from app.services.dtos import (
     RiskIncidentCreateData,
     RiskIncidentDTO,
     RiskIncidentUpdateData,
+    TransferRecommendationCreateData,
+    TransferRecommendationDTO,
 )
 
 
@@ -72,9 +74,7 @@ class SQLAlchemyInventoryRepository:
     def __init__(self, session: Session) -> None:
         self._session = session
 
-    def get_balance(
-        self, dc_id: int, product_id: int
-    ) -> InventoryBalanceDTO | None:
+    def get_balance(self, dc_id: int, product_id: int) -> InventoryBalanceDTO | None:
         stmt = select(InventoryBalance).where(
             InventoryBalance.dc_id == dc_id,
             InventoryBalance.product_id == product_id,
@@ -129,9 +129,7 @@ class SQLAlchemyInventoryPolicyRepository:
     def __init__(self, session: Session) -> None:
         self._session = session
 
-    def get_active_policy(
-        self, dc_id: int, product_id: int
-    ) -> InventoryPolicyDTO | None:
+    def get_active_policy(self, dc_id: int, product_id: int) -> InventoryPolicyDTO | None:
         stmt = select(InventoryPolicy).where(
             InventoryPolicy.dc_id == dc_id,
             InventoryPolicy.product_id == product_id,
@@ -184,9 +182,7 @@ class SQLAlchemyDistributionCenterRepository:
             is_active=dc.is_active,
         )
 
-    def get_active_source_dcs(
-        self, exclude_dc_id: int
-    ) -> list[DistributionCenterDTO]:
+    def get_active_source_dcs(self, exclude_dc_id: int) -> list[DistributionCenterDTO]:
         stmt = select(DistributionCenter).where(
             DistributionCenter.id != exclude_dc_id,
             DistributionCenter.is_active == True,  # noqa: E712
@@ -211,9 +207,7 @@ class SQLAlchemyRouteRepository:
     def __init__(self, session: Session) -> None:
         self._session = session
 
-    def get_active_route(
-        self, source_dc_id: int, target_dc_id: int
-    ) -> DCRoute | None:
+    def get_active_route(self, source_dc_id: int, target_dc_id: int) -> DCRoute | None:
         stmt = select(DCRoute).where(
             DCRoute.source_dc_id == source_dc_id,
             DCRoute.target_dc_id == target_dc_id,
@@ -257,19 +251,25 @@ class SQLAlchemyRiskIncidentRepository:
         self, incident: RiskIncident | RiskIncidentCreateData
     ) -> RiskIncidentDTO | RiskIncident:
         if isinstance(incident, RiskIncidentCreateData):
-            orm_inc = RiskIncident(
-                incident_code=incident.incident_code,
-                target_dc_id=incident.target_dc_id,
-                product_id=incident.product_id,
-                current_dos=incident.current_dos,
-                days_to_stockout=incident.days_to_stockout,
-                projected_stockout_date=incident.projected_stockout_date,
-                shortage_qty=incident.shortage_qty,
-                severity=incident.severity,
-                status=incident.status,
-            )
+            kwargs = {
+                "incident_code": incident.incident_code,
+                "target_dc_id": incident.target_dc_id,
+                "product_id": incident.product_id,
+                "current_dos": incident.current_dos,
+                "days_to_stockout": incident.days_to_stockout,
+                "projected_stockout_date": incident.projected_stockout_date,
+                "shortage_qty": incident.shortage_qty,
+                "severity": incident.severity,
+                "status": incident.status,
+            }
+            if incident.detected_at is not None:
+                kwargs["detected_at"] = incident.detected_at
+
+            orm_inc = RiskIncident(**kwargs)
             self._session.add(orm_inc)
             self._session.flush()
+            self._session.refresh(orm_inc)
+
             return RiskIncidentDTO(
                 id=orm_inc.id,
                 incident_code=orm_inc.incident_code,
@@ -322,12 +322,28 @@ class SQLAlchemyRiskIncidentRepository:
         stmt = select(RiskIncident).where(RiskIncident.incident_code == incident_code)
         return self._session.execute(stmt).scalar_one_or_none()
 
+    def list_incidents(self) -> list[RiskIncidentDTO]:
+        stmt = select(RiskIncident).order_by(RiskIncident.detected_at.desc())
+        result: Sequence[RiskIncident] = self._session.execute(stmt).scalars().all()
+        return [
+            RiskIncidentDTO(
+                id=inc.id,
+                incident_code=inc.incident_code,
+                target_dc_id=inc.target_dc_id,
+                product_id=inc.product_id,
+                current_dos=inc.current_dos,
+                days_to_stockout=inc.days_to_stockout,
+                projected_stockout_date=inc.projected_stockout_date,
+                shortage_qty=inc.shortage_qty,
+                severity=inc.severity,
+                status=inc.status,
+                detected_at=inc.detected_at,
+            )
+            for inc in result
+        ]
+
     def update_status(self, incident_id: int, status: str) -> bool:
-        stmt = (
-            update(RiskIncident)
-            .where(RiskIncident.id == incident_id)
-            .values(status=status)
-        )
+        stmt = update(RiskIncident).where(RiskIncident.id == incident_id).values(status=status)
         result = self._session.execute(stmt)
         return result.rowcount > 0
 
@@ -339,39 +355,66 @@ class SQLAlchemyTransferRecommendationRepository:
         self._session = session
 
     def create_recommendation(
-        self, recommendation: TransferRecommendation
-    ) -> TransferRecommendation:
+        self, recommendation: TransferRecommendation | TransferRecommendationCreateData
+    ) -> TransferRecommendation | TransferRecommendationDTO:
+        if isinstance(recommendation, TransferRecommendationCreateData):
+            orm_rec = TransferRecommendation(
+                recommendation_code=recommendation.recommendation_code,
+                incident_id=recommendation.incident_id,
+                source_dc_id=recommendation.source_dc_id,
+                target_dc_id=recommendation.target_dc_id,
+                product_id=recommendation.product_id,
+                recommended_qty=recommendation.recommended_qty,
+                feasible_qty_snapshot=recommendation.feasible_qty_snapshot,
+                source_surplus_snapshot=recommendation.source_surplus_snapshot,
+                transit_days_snapshot=recommendation.transit_days_snapshot,
+                route_unit_cost_snapshot=recommendation.route_unit_cost_snapshot,
+                estimated_cost_snapshot=recommendation.estimated_cost_snapshot,
+                rationale=recommendation.rationale,
+                recommendation_source=recommendation.recommendation_source,
+                status=recommendation.status,
+            )
+            self._session.add(orm_rec)
+            self._session.flush()
+            return TransferRecommendationDTO(
+                id=orm_rec.id,
+                recommendation_code=orm_rec.recommendation_code,
+                incident_id=orm_rec.incident_id,
+                source_dc_id=orm_rec.source_dc_id,
+                target_dc_id=orm_rec.target_dc_id,
+                product_id=orm_rec.product_id,
+                recommended_qty=orm_rec.recommended_qty,
+                feasible_qty_snapshot=orm_rec.feasible_qty_snapshot,
+                source_surplus_snapshot=orm_rec.source_surplus_snapshot,
+                transit_days_snapshot=orm_rec.transit_days_snapshot,
+                route_unit_cost_snapshot=orm_rec.route_unit_cost_snapshot,
+                estimated_cost_snapshot=orm_rec.estimated_cost_snapshot,
+                rationale=orm_rec.rationale,
+                recommendation_source=orm_rec.recommendation_source,
+                status=orm_rec.status,
+                created_at=orm_rec.created_at,
+            )
         self._session.add(recommendation)
         self._session.flush()
         return recommendation
 
-    def get_by_id(
-        self, recommendation_id: int
-    ) -> TransferRecommendation | None:
-        stmt = select(TransferRecommendation).where(
-            TransferRecommendation.id == recommendation_id
-        )
+    def get_by_id(self, recommendation_id: int) -> TransferRecommendation | None:
+        stmt = select(TransferRecommendation).where(TransferRecommendation.id == recommendation_id)
         return self._session.execute(stmt).scalar_one_or_none()
 
-    def get_by_code(
-        self, recommendation_code: str
-    ) -> TransferRecommendation | None:
+    def get_by_code(self, recommendation_code: str) -> TransferRecommendation | None:
         stmt = select(TransferRecommendation).where(
             TransferRecommendation.recommendation_code == recommendation_code
         )
         return self._session.execute(stmt).scalar_one_or_none()
 
-    def get_by_incident_id(
-        self, incident_id: int
-    ) -> list[TransferRecommendation]:
+    def get_by_incident_id(self, incident_id: int) -> list[TransferRecommendation]:
         stmt = (
             select(TransferRecommendation)
             .where(TransferRecommendation.incident_id == incident_id)
             .order_by(TransferRecommendation.created_at.asc())
         )
-        result: Sequence[TransferRecommendation] = (
-            self._session.execute(stmt).scalars().all()
-        )
+        result: Sequence[TransferRecommendation] = self._session.execute(stmt).scalars().all()
         return list(result)
 
     def update_decision_status(
@@ -435,9 +478,7 @@ class SQLAlchemyAuditRepository:
         result: Sequence[AuditEvent] = self._session.execute(stmt).scalars().all()
         return list(result)
 
-    def get_by_recommendation_id(
-        self, recommendation_id: int
-    ) -> list[AuditEvent]:
+    def get_by_recommendation_id(self, recommendation_id: int) -> list[AuditEvent]:
         stmt = (
             select(AuditEvent)
             .where(AuditEvent.recommendation_id == recommendation_id)

@@ -5,9 +5,11 @@ Contains ZERO imports from app.infrastructure or SQLAlchemy.
 """
 
 from datetime import date
-from typing import Protocol
+from typing import Any, Protocol, runtime_checkable
 
 from app.services.dtos import (
+    AIRecommendationInputDTO,
+    AIRecommendationOutputDTO,
     AuditEventCreateData,
     AuditEventDTO,
     DailyDemandSignalDTO,
@@ -19,6 +21,8 @@ from app.services.dtos import (
     RiskIncidentCreateData,
     RiskIncidentDTO,
     RiskIncidentUpdateData,
+    TransferRecommendationCreateData,
+    TransferRecommendationDTO,
 )
 from app.services.unit_of_work import UnitOfWorkProtocol
 
@@ -80,11 +84,34 @@ class RiskIncidentRepositoryInterface(Protocol):
         self, incident_id: int, update_data: RiskIncidentUpdateData
     ) -> RiskIncidentDTO | None: ...
 
-    def get_by_id(self, incident_id: int) -> RiskIncidentDTO | None: ...
+    def get_by_id(self, incident_id: int) -> RiskIncidentDTO | Any | None: ...
 
-    def get_by_code(self, incident_code: str) -> RiskIncidentDTO | None: ...
+    def get_by_code(self, incident_code: str) -> RiskIncidentDTO | Any | None: ...
+
+    def list_incidents(self) -> list[RiskIncidentDTO]: ...
 
     def update_status(self, incident_id: int, status: str) -> bool: ...
+
+
+class TransferRecommendationRepositoryInterface(Protocol):
+    """Protocol for transfer recommendation persistence and querying."""
+
+    def create_recommendation(
+        self, create_data: TransferRecommendationCreateData
+    ) -> TransferRecommendationDTO: ...
+
+    def get_by_id(self, recommendation_id: int) -> TransferRecommendationDTO | None: ...
+
+    def get_by_code(self, recommendation_code: str) -> TransferRecommendationDTO | None: ...
+
+    def get_by_incident_id(self, incident_id: int) -> list[TransferRecommendationDTO]: ...
+
+    def update_decision_status(
+        self,
+        recommendation_id: int,
+        new_status: str,
+        allowed_current_statuses: tuple[str, ...] = ("PROPOSED", "VALIDATED"),
+    ) -> int: ...
 
 
 class AuditRepositoryInterface(Protocol):
@@ -97,7 +124,17 @@ class AuditRepositoryInterface(Protocol):
     def get_by_recommendation_id(self, recommendation_id: int) -> list[AuditEventDTO]: ...
 
 
+@runtime_checkable
+class AIRecommendationProviderInterface(Protocol):
+    """Protocol for external AI recommendation providers."""
+
+    def generate_recommendation(
+        self, input_data: AIRecommendationInputDTO
+    ) -> AIRecommendationOutputDTO: ...
+
+
 __all__ = [
+    "AIRecommendationProviderInterface",
     "AuditRepositoryInterface",
     "DemandRepositoryInterface",
     "DistributionCenterRepositoryInterface",
@@ -106,5 +143,6 @@ __all__ = [
     "ProductRepositoryInterface",
     "RiskIncidentRepositoryInterface",
     "RouteRepositoryInterface",
+    "TransferRecommendationRepositoryInterface",
     "UnitOfWorkProtocol",
 ]

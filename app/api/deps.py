@@ -29,6 +29,7 @@ from app.services.candidate_discovery_service import CandidateDiscoveryService
 from app.services.interfaces import AIRecommendationProviderInterface, UnitOfWorkProtocol
 from app.services.process_risk_detection_service import ProcessRiskDetectionService
 from app.services.recommendation_service import RecommendationService
+from app.services.risk_query_service import RiskQueryService
 
 
 def get_process_risk_detection_service(
@@ -46,6 +47,19 @@ def get_process_risk_detection_service(
         risk_repo=SQLAlchemyRiskIncidentRepository(db),
         audit_repo=SQLAlchemyAuditRepository(db),
         uow=SQLAlchemyUnitOfWork(db),
+    )
+
+
+def get_risk_query_service(
+    db: Annotated[Session, Depends(get_db)],
+) -> RiskQueryService:
+    """
+    Factory constructing RiskQueryService with concrete repositories.
+    """
+    return RiskQueryService(
+        risk_repo=SQLAlchemyRiskIncidentRepository(db),
+        dc_repo=SQLAlchemyDistributionCenterRepository(db),
+        product_repo=SQLAlchemyProductRepository(db),
     )
 
 

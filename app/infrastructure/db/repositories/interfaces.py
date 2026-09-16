@@ -21,9 +21,7 @@ class ProductRepositoryInterface(Protocol):
 class InventoryRepositoryInterface(Protocol):
     """Protocol for inventory balance queries. Inventory mutations are strictly forbidden."""
 
-    def get_balance(
-        self, dc_id: int, product_id: int
-    ) -> InventoryBalance | None: ...
+    def get_balance(self, dc_id: int, product_id: int) -> InventoryBalance | None: ...
 
 
 class DemandRepositoryInterface(Protocol):
@@ -37,9 +35,7 @@ class DemandRepositoryInterface(Protocol):
 class InventoryPolicyRepositoryInterface(Protocol):
     """Protocol for SKU/DC inventory policy queries."""
 
-    def get_active_policy(
-        self, dc_id: int, product_id: int
-    ) -> InventoryPolicy | None: ...
+    def get_active_policy(self, dc_id: int, product_id: int) -> InventoryPolicy | None: ...
 
 
 class DistributionCenterRepositoryInterface(Protocol):
@@ -49,17 +45,13 @@ class DistributionCenterRepositoryInterface(Protocol):
 
     def get_by_code(self, code: str) -> DistributionCenter | None: ...
 
-    def get_active_source_dcs(
-        self, exclude_dc_id: int
-    ) -> list[DistributionCenter]: ...
+    def get_active_source_dcs(self, exclude_dc_id: int) -> list[DistributionCenter]: ...
 
 
 class RouteRepositoryInterface(Protocol):
     """Protocol for transportation route queries."""
 
-    def get_active_route(
-        self, source_dc_id: int, target_dc_id: int
-    ) -> DCRoute | None: ...
+    def get_active_route(self, source_dc_id: int, target_dc_id: int) -> DCRoute | None: ...
 
 
 class RiskIncidentRepositoryInterface(Protocol):
@@ -75,6 +67,8 @@ class RiskIncidentRepositoryInterface(Protocol):
 
     def get_by_code(self, incident_code: str) -> RiskIncident | None: ...
 
+    def list_incidents(self) -> list[RiskIncident]: ...
+
     def update_status(self, incident_id: int, status: str) -> bool: ...
 
 
@@ -85,17 +79,11 @@ class TransferRecommendationRepositoryInterface(Protocol):
         self, recommendation: TransferRecommendation
     ) -> TransferRecommendation: ...
 
-    def get_by_id(
-        self, recommendation_id: int
-    ) -> TransferRecommendation | None: ...
+    def get_by_id(self, recommendation_id: int) -> TransferRecommendation | None: ...
 
-    def get_by_code(
-        self, recommendation_code: str
-    ) -> TransferRecommendation | None: ...
+    def get_by_code(self, recommendation_code: str) -> TransferRecommendation | None: ...
 
-    def get_by_incident_id(
-        self, incident_id: int
-    ) -> list[TransferRecommendation]: ...
+    def get_by_incident_id(self, incident_id: int) -> list[TransferRecommendation]: ...
 
     def update_decision_status(
         self,
@@ -115,6 +103,4 @@ class AuditRepositoryInterface(Protocol):
 
     def get_by_incident_id(self, incident_id: int) -> list[AuditEvent]: ...
 
-    def get_by_recommendation_id(
-        self, recommendation_id: int
-    ) -> list[AuditEvent]: ...
+    def get_by_recommendation_id(self, recommendation_id: int) -> list[AuditEvent]: ...

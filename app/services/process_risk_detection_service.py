@@ -5,7 +5,7 @@ Operates strictly on application DTOs and protocols with ZERO infrastructure or 
 """
 
 import json
-from datetime import date, datetime, timedelta
+from datetime import UTC, date, datetime, time, timedelta
 
 from app.domain.demand import calculate_average_daily_demand
 from app.domain.enums import IncidentStatus, PlannerAction
@@ -99,16 +99,13 @@ class ProcessRiskDetectionService:
                 product = self._product_repo.get_by_sku(product_id_or_sku)
 
             if product is None:
-                raise ResourceNotFoundError(
-                    f"Product '{product_id_or_sku}' not found"
-                )
+                raise ResourceNotFoundError(f"Product '{product_id_or_sku}' not found")
 
             # 4. Retrieve current inventory balance
             balance = self._inventory_repo.get_balance(target_dc.id, product.id)
             if balance is None:
                 raise ResourceNotFoundError(
-                    f"Inventory balance not found for DC '{target_dc.code}' "
-                    f"and SKU '{product.sku}'"
+                    f"Inventory balance not found for DC '{target_dc.code}' and SKU '{product.sku}'"
                 )
 
             # 5. Calculate available inventory using domain function
@@ -163,15 +160,14 @@ class ProcessRiskDetectionService:
                     shortage_qty=float(risk_assessment.shortage_quantity),
                     severity=risk_assessment.severity.value,
                 )
-                updated_dto = self._risk_repo.update_incident(
-                    existing_incident.id, update_data
-                )
+                updated_dto = self._risk_repo.update_incident(existing_incident.id, update_data)
                 incident_dto = updated_dto or existing_incident
             else:
                 is_new = True
                 incident_code = (
                     f"INC-{target_dc.code}-{product.sku}-{detection_date.strftime('%Y%m%d')}"
                 )
+                detected_dt = datetime.combine(detection_date, time.min, tzinfo=UTC)
                 create_data = RiskIncidentCreateData(
                     incident_code=incident_code,
                     target_dc_id=target_dc.id,
@@ -182,6 +178,7 @@ class ProcessRiskDetectionService:
                     shortage_qty=float(risk_assessment.shortage_quantity),
                     severity=risk_assessment.severity.value,
                     status=IncidentStatus.OPEN.value,
+                    detected_at=detected_dt,
                 )
                 incident_dto = self._risk_repo.create_incident(create_data)
 

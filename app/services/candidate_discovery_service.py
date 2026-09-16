@@ -4,7 +4,7 @@ Orchestrates deterministic candidate source DC discovery for a given RiskInciden
 Applies strict arrival feasibility and domain transfer rules.
 """
 
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 
 from app.domain.demand import calculate_average_daily_demand
 from app.domain.enums import IncidentStatus
@@ -123,10 +123,17 @@ class CandidateDiscoveryService:
             if source_policy is None or not source_policy.is_active:
                 continue
 
-            # Calculate source safety stock units
-            # Fetch demand signals for candidate source DC to compute source average daily demand
-            reference_date = date.today()
+            if hasattr(incident, "detected_at") and incident.detected_at:
+                reference_date = (
+                    incident.detected_at.date()
+                    if isinstance(incident.detected_at, datetime)
+                    else incident.detected_at
+                )
+            else:
+                reference_date = date.today()
+
             start_date = reference_date - timedelta(days=13)
+
             source_demand_signals = self._demand_repo.get_daily_demand_signals(
                 dc_id=source_dc.id,
                 product_id=incident.product_id,
