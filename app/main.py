@@ -8,6 +8,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.api.exception_handlers import (
     http_exception_handler,
+    invalid_state_transition_handler,
     recommendation_validation_handler,
     resource_inactive_handler,
     resource_not_found_handler,
@@ -20,7 +21,11 @@ from app.core.config import settings
 from app.core.logging import logger, setup_logging
 from app.core.middleware import CorrelationIdMiddleware
 from app.domain.exceptions import RecommendationValidationError
-from app.services.exceptions import ResourceInactiveError, ResourceNotFoundError
+from app.services.exceptions import (
+    InvalidStateTransitionError,
+    ResourceInactiveError,
+    ResourceNotFoundError,
+)
 
 
 @asynccontextmanager
@@ -55,6 +60,7 @@ def create_application() -> FastAPI:
 
     # Exception Handlers
     app.add_exception_handler(ResourceNotFoundError, resource_not_found_handler)
+    app.add_exception_handler(InvalidStateTransitionError, invalid_state_transition_handler)
     app.add_exception_handler(ResourceInactiveError, resource_inactive_handler)
     app.add_exception_handler(RecommendationValidationError, recommendation_validation_handler)
     app.add_exception_handler(RequestValidationError, validation_exception_handler)

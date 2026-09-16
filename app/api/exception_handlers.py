@@ -13,7 +13,11 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.domain.exceptions import RecommendationValidationError
 from app.schemas.error import ErrorResponse
-from app.services.exceptions import ResourceInactiveError, ResourceNotFoundError
+from app.services.exceptions import (
+    InvalidStateTransitionError,
+    ResourceInactiveError,
+    ResourceNotFoundError,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -32,6 +36,22 @@ async def resource_not_found_handler(request: Request, exc: ResourceNotFoundErro
     )
     return JSONResponse(
         status_code=status.HTTP_404_NOT_FOUND,
+        content=error_payload.model_dump(),
+    )
+
+
+async def invalid_state_transition_handler(
+    request: Request, exc: InvalidStateTransitionError
+) -> JSONResponse:
+    correlation_id = _get_correlation_id(request)
+    error_payload = ErrorResponse(
+        error_code="INVALID_STATE_TRANSITION",
+        message=str(exc),
+        details={},
+        correlation_id=correlation_id,
+    )
+    return JSONResponse(
+        status_code=status.HTTP_409_CONFLICT,
         content=error_payload.model_dump(),
     )
 

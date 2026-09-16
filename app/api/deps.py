@@ -27,6 +27,7 @@ from app.infrastructure.db.repositories.sqlalchemy_repositories import (
 from app.infrastructure.db.unit_of_work import SQLAlchemyUnitOfWork
 from app.services.candidate_discovery_service import CandidateDiscoveryService
 from app.services.interfaces import AIRecommendationProviderInterface, UnitOfWorkProtocol
+from app.services.planner_decision_service import PlannerDecisionService
 from app.services.process_risk_detection_service import ProcessRiskDetectionService
 from app.services.recommendation_service import RecommendationService
 from app.services.risk_query_service import RiskQueryService
@@ -140,4 +141,18 @@ def get_recommendation_service(
         ai_provider=ai_provider,
         uow=uow,
         demand_repo=demand_repo,
+    )
+
+
+def get_planner_decision_service(
+    db: Annotated[Session, Depends(get_db)],
+) -> PlannerDecisionService:
+    """
+    Factory constructing PlannerDecisionService with concrete repositories and UnitOfWork.
+    """
+    return PlannerDecisionService(
+        recommendation_repo=SQLAlchemyTransferRecommendationRepository(db),
+        risk_repo=SQLAlchemyRiskIncidentRepository(db),
+        audit_repo=SQLAlchemyAuditRepository(db),
+        uow=SQLAlchemyUnitOfWork(db),
     )

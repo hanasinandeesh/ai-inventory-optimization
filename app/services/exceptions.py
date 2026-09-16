@@ -19,3 +19,9 @@ class ResourceInactiveError(ApplicationServiceError):
     """Raised when a target resource (DC, Route) is in an inactive state."""
 
     pass
+
+
+class InvalidStateTransitionError(ApplicationServiceError):
+    """Raised when a state transition cannot be performed due to current state constraints."""
+
+    pass

@@ -292,3 +292,20 @@ class RecommendationResultDTO:
     recommendation_source: str | None = None
     rationale: str | None = None
     created_at: datetime | None = None
+
+
+@dataclass(frozen=True)
+class PlannerDecisionResultDTO:
+    """Dataclass representing the outcome of PlannerDecisionService decision execution."""
+
+    recommendation_id: int
+    recommendation_code: str
+    status: str
+    incident_id: int
+    incident_status: str
+    planner_id: str | None
+    comment: str | None
+    rejection_reason: str | None
+    recommended_qty: int
+    estimated_total_cost: Decimal
+    decided_at: datetime

@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 from app.api.deps import (
     get_ai_recommendation_provider,
     get_candidate_discovery_service,
+    get_planner_decision_service,
     get_recommendation_service,
 )
 from app.core.config import settings
@@ -17,6 +18,7 @@ from app.infrastructure.ai.gemini_provider import GeminiRecommendationProvider
 from app.services.candidate_discovery_service import CandidateDiscoveryService
 from app.services.dtos import AIRecommendationInputDTO, AIRecommendationOutputDTO
 from app.services.interfaces import AIRecommendationProviderInterface
+from app.services.planner_decision_service import PlannerDecisionService
 from app.services.recommendation_service import RecommendationService
 
 
@@ -76,3 +78,14 @@ def test_recommendation_service_works_with_fake_provider_without_gemini() -> Non
     # Verify RecommendationService is provider-agnostic
     assert service._ai_provider == fake_provider
     assert not hasattr(service, "_gemini_client")
+
+
+def test_get_planner_decision_service_construction() -> None:
+    """Verify get_planner_decision_service constructs PlannerDecisionService
+    with expected dependencies."""
+    mock_db = MagicMock(spec=Session)
+
+    service = get_planner_decision_service(db=mock_db)
+
+    assert isinstance(service, PlannerDecisionService)
+    assert not hasattr(service, "_ai_provider")
